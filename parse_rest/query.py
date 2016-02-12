@@ -15,6 +15,8 @@ import json
 import copy
 import collections
 
+DEFAULT_ACL = {u'*': {u'read': True, u'write': True}}
+
 
 class QueryError(Exception):
     '''Query error base class'''
@@ -38,7 +40,7 @@ class QueryResourceMultipleResultsReturned(QueryError):
 def set_default_acl(dict):
     if 'ACL' in dict.keys():
         return dict
-    dict['ACL'] = {u'*': {u'read': True, u'write': True}}
+    dict['ACL'] = DEFAULT_ACL
     return dict
 
 
