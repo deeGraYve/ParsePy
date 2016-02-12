@@ -35,15 +35,22 @@ class QueryResourceMultipleResultsReturned(QueryError):
     pass
 
 
-class QueryManager(object):
+def set_default_acl(dict):
+    if 'ACL' in dict.keys():
+        return dict
+    dict['ACL'] = {u'*': {u'read': True, u'write': True}}
+    return dict
 
+
+class QueryManager(object):
     def __init__(self, model_class):
         self.model_class = model_class
 
     def _fetch(self, **kw):
         klass = self.model_class
         uri = self.model_class.ENDPOINT_ROOT
-        return [klass(**it) for it in klass.GET(uri, **kw).get('results')]
+        return [klass(**it) for it in [set_default_acl(item) for item in
+                                       klass.GET(uri, **kw).get('results')]]
 
     def _count(self, **kw):
         kw.update({"count": 1})
@@ -63,9 +70,9 @@ class QueryManager(object):
 
 
 class Queryset(object):
-
     OPERATORS = [
-        'lt', 'lte', 'gt', 'gte', 'ne', 'in', 'nin', 'exists', 'select', 'dontSelect', 'all', 'regex', 'relatedTo', 'nearSphere'
+        'lt', 'lte', 'gt', 'gte', 'ne', 'in', 'nin', 'exists', 'select', 'dontSelect', 'all', 'regex', 'relatedTo',
+        'nearSphere'
     ]
 
     @staticmethod
@@ -99,8 +106,8 @@ class Queryset(object):
         return iter(self._fetch())
 
     def __len__(self):
-        #don't use count query for len operator
-        #count doesn't return real size of result in all cases (eg if query contains skip option)
+        # don't use count query for len operator
+        # count doesn't return real size of result in all cases (eg if query contains skip option)
         return len(self._fetch())
 
     def __getitem__(self, key):
@@ -173,12 +180,12 @@ class Queryset(object):
         results = self._fetch()
         if len(results) == 0:
             error_message = 'Query against %s returned no results' % (
-                    self._manager.model_class.ENDPOINT_ROOT)
+                self._manager.model_class.ENDPOINT_ROOT)
             raise QueryResourceDoesNotExist(error_message,
                                             status_code=404)
         if len(results) >= 2:
             error_message = 'Query against %s returned multiple results' % (
-                    self._manager.model_class.ENDPOINT_ROOT)
+                self._manager.model_class.ENDPOINT_ROOT)
             raise QueryResourceMultipleResultsReturned(error_message,
                                                        status_code=404)
         return results[0]
